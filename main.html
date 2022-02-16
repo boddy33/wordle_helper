@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Wordle helper</title>
+    <script src="words5.js"></script>
+</head>
+
+<body>
+    <div>
+        Specify search criteria, example: f_c__ +:os -:ir
+    </div>
+    <input type="text" name="searchInstructions" id="searchInstructions" value="_____ +: -:" />
+    <button id="filterButton" onclick="onFilterButtonClick()">Filter</button>
+    <label id="resultCount"></label>
+
+    <br>
+    <pre id="output"></pre>
+
+    <script type="text/javascript">
+
+        function onFilterButtonClick() {
+            srcText = document.getElementById('searchInstructions').value;
+            var r1 = filterBase(srcText); // like: "f_c__ +:os, -:ir"
+            var result = words5.filter(word => myFilter(word, r1));
+            var resCount = "->" + result.length.toString() + " words(s)";
+            document.getElementById('resultCount')
+                .innerHTML = resCount;
+            var outRes = result.join("\r\n");
+            document.getElementById('output')
+                .textContent = outRes;
+        }
+        function getMatchingWords() {
+        }
+        const allAreIn = (word, plusPtrn) => {
+            if (plusPtrn == '') {
+                return true;
+            }
+            for (let i = 0; i < plusPtrn.length; i++) {
+                if (word.indexOf(plusPtrn[i]) < 0) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        const anyIsIn = (word, minusPtrn) => {
+            if (minusPtrn == '') {
+                return false;
+            }
+            for (let i = 0; i < minusPtrn.length; i++) {
+                if (word.indexOf(minusPtrn[i]) >= 0) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        const filterBase = (s) => {
+            const regex = /[_]/ig;
+            var sBaseArr = s.match(/(\w+) /);
+            var sBase = s;
+            if (sBaseArr != null) {
+                sBase = sBaseArr[1];
+            }
+
+            var basicPtrn = sBase.replaceAll(regex, '[A-Za-z]');
+
+            var plusPtrn = '';
+            var plusPtrnArr = s.match(/[+]:([A-Za-z]+)/);
+            if (plusPtrnArr != null) {
+                plusPtrn = plusPtrnArr[1];
+            }
+            var minusPtrn = '';
+            var minusPtrnArr = s.match(/[-]:([A-Za-z]+)/);
+            if (minusPtrnArr != null) {
+                minusPtrn = minusPtrnArr[1];
+            }
+
+            return {
+                basicPattern: basicPtrn,
+                plusPattern: plusPtrn,
+                minusPattern: minusPtrn,
+            }
+        }
+
+        var myFilter = (word, filterBase) => {
+            var myRe = new RegExp(filterBase.basicPattern, "g");
+            if (!myRe.test(word)) {
+                return false;
+            }
+
+            if (!allAreIn(word, filterBase.plusPattern)) {
+                return false;
+            }
+            if (anyIsIn(word, filterBase.minusPattern)) {
+                return false;
+            }
+            return true;
+        }
+
+        var t1 = get5LWords();
+        var words5 = [];
+        var words = t1.split("\n");
+        words5 = words.map(wrd => wrd.toLowerCase());
+    </script>
+</body>
+
+</html>
