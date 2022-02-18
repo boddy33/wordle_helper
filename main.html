@@ -18,19 +18,71 @@
     <pre id="output"></pre>
 
     <script type="text/javascript">
+        function isFilterCorrect(filterText) { //a_b__ +:sn -:i
+            const regex = /^(([_]|[a-zA-Z]){5}) /g;
+            var sBaseArr = filterText.match(regex);
+            if (sBaseArr == null) {
+                showErrMsg("Incorrect pattern, it should contain only 5 characters, that are either letters or _");
+                return false;
+            }
+            var filter1 = sBaseArr[0];
+            var positionPlacedLetters = filter1.replaceAll(/[_]| /g, '');
+            var plusLetters = getPlusPattern(filterText);
+            var minusLetters = getMinusPattern(filterText);
+            var plusArr = [...positionPlacedLetters, ...plusLetters];
+            var uniqPlus = [...new Set(plusArr)];
+            if (uniqPlus.length > 5) {
+                showErrMsg("Incorrect filter, there should NOT be more than 5 letters in the word, but you specify " + uniqPlus.join());
+                return false;
+            }
+            var uniqMinus = [...new Set([...minusLetters])];
+            var intersectPlusAndMinus = uniqPlus.filter(value => uniqMinus.includes(value));
+            if (intersectPlusAndMinus.length > 0) {
+                showErrMsg("Incorrect filter, you specify the following letters to be both present and absent: " + intersectPlusAndMinus.join());
+                return false;
+            }
+
+            return true;
+        }
+
+        function showErrMsg(msg) {
+            document.getElementById('resultCount')
+                .innerHTML = "0";
+            document.getElementById('output')
+                .textContent = msg;
+        }
+
+        function getPlusPattern(filterText) {
+            var ptrn = '';
+            var ptrnArr = filterText.match(/[+]:([A-Za-z]+)/);
+            if (ptrnArr != null) {
+                ptrn = ptrnArr[1];
+            }
+            return ptrn;
+        }
+        function getMinusPattern(filterText) {
+            var ptrn = '';
+            var ptrnArr = filterText.match(/[-]:([A-Za-z]+)/);
+            if (ptrnArr != null) {
+                ptrn = ptrnArr[1];
+            }
+            return ptrn;
+        }
+
 
         function onFilterButtonClick() {
             srcText = document.getElementById('searchInstructions').value;
+            if (!isFilterCorrect(srcText)) {
+                return;
+            }
             var r1 = filterBase(srcText); // like: "f_c__ +:os, -:ir"
             var result = words5.filter(word => myFilter(word, r1));
-            var resCount = "->" + result.length.toString() + " words(s)";
+            var resCount = "->" + result.length.toString() + " word(s)";
             document.getElementById('resultCount')
                 .innerHTML = resCount;
             var outRes = result.join("\r\n");
             document.getElementById('output')
                 .textContent = outRes;
-        }
-        function getMatchingWords() {
         }
         const allAreIn = (word, plusPtrn) => {
             if (plusPtrn == '') {
@@ -65,16 +117,8 @@
 
             var basicPtrn = sBase.replaceAll(regex, '[A-Za-z]');
 
-            var plusPtrn = '';
-            var plusPtrnArr = s.match(/[+]:([A-Za-z]+)/);
-            if (plusPtrnArr != null) {
-                plusPtrn = plusPtrnArr[1];
-            }
-            var minusPtrn = '';
-            var minusPtrnArr = s.match(/[-]:([A-Za-z]+)/);
-            if (minusPtrnArr != null) {
-                minusPtrn = minusPtrnArr[1];
-            }
+            var plusPtrn = getPlusPattern(s);
+            var minusPtrn = getMinusPattern(s);
 
             return {
                 basicPattern: basicPtrn,
